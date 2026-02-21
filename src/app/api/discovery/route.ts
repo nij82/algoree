@@ -11,13 +11,13 @@ export async function GET(req: NextRequest) {
         // 1. Get Cached Trending Pool
         const trending = await getTrendingVideosKR();
 
-        if (!session || !session.accessToken) {
+        if (!session || !(session as any).accessToken) {
             // Not logged in: Return default ranked list
             return NextResponse.json(trending.sort(() => Math.random() - 0.5).slice(0, 50));
         }
 
         // 2. Fetch User History
-        const history = await getUserHistory(session.accessToken as string);
+        const history = await getUserHistory((session as any).accessToken as string);
 
         // 3. User Advanced Discovery Engine
         const discoveryList = await getAdvancedDiscoveryList(history, trending);
