@@ -82,3 +82,23 @@ export async function getAdvancedDiscoveryList(
     // 결과 셔플 (사용자 경험상 너무 정적인 것보다 매번 조금씩 다른 게 좋음)
     return combined.sort(() => Math.random() - 0.5);
 }
+
+/**
+ * 트렌드 리스트: 순수 인기 급상승 영상
+ */
+export async function getTrendsList(trendingPool: YouTubeVideo[]): Promise<YouTubeVideo[]> {
+    return trendingPool.map(v => ({
+        ...v,
+        tags: ["#실시간트렌드", ...(v.tags || [])].slice(0, 2)
+    }));
+}
+
+/**
+ * 숨은 보석 리스트: 소형 채널 + 고참여도 영상 집중 추천
+ */
+export async function getGemsList(trendingPool: YouTubeVideo[]): Promise<YouTubeVideo[]> {
+    const rankedGems = rankHiddenGems(trendingPool);
+
+    // 보석 점수가 높거나 신생 채널인 영상 우선
+    return rankedGems.filter(v => (v.gemScore || 0) > 40 || v.tags?.includes("#신생채널")).slice(0, 50);
+}

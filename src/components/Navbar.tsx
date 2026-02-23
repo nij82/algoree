@@ -1,17 +1,20 @@
 "use client";
 
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Compass, LogIn, LogOut, Search, Menu } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
-import { useState, useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
-export default function Navbar() {
+function NavbarContent() {
     const { data: session } = useSession();
     const [scrolled, setScrolled] = useState(false);
     const { t } = useTranslation();
+    const searchParams = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'discovery';
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -40,9 +43,39 @@ export default function Navbar() {
                 {/* CENTER: Navigation Menu */}
                 <div className="hidden md:flex flex-[2] items-center justify-center">
                     <div className="flex items-center gap-1 bg-surface-container-high px-2 py-1.5 rounded-full border border-outline-variant shadow-elevation-1">
-                        <Link href="/discovery" className="px-6 py-2 text-sm font-bold text-on-surface-variant hover:text-primary hover:bg-primary-container rounded-full transition-all">{t.nav_discovery}</Link>
-                        <Link href="#" className="px-6 py-2 text-sm font-bold text-on-surface-variant hover:text-primary hover:bg-primary-container rounded-full transition-all">{t.nav_trends}</Link>
-                        <Link href="#" className="px-6 py-2 text-sm font-bold text-on-surface-variant hover:text-primary hover:bg-primary-container rounded-full transition-all">{t.nav_gems}</Link>
+                        <Link
+                            href="/discovery?tab=discovery"
+                            className={clsx(
+                                "px-6 py-2 text-sm font-bold rounded-full transition-all",
+                                activeTab === 'discovery'
+                                    ? "bg-primary text-on-primary shadow-elevation-2"
+                                    : "text-on-surface-variant hover:text-primary hover:bg-primary-container"
+                            )}
+                        >
+                            {t.nav_discovery}
+                        </Link>
+                        <Link
+                            href="/discovery?tab=trends"
+                            className={clsx(
+                                "px-6 py-2 text-sm font-bold rounded-full transition-all",
+                                activeTab === 'trends'
+                                    ? "bg-primary text-on-primary shadow-elevation-2"
+                                    : "text-on-surface-variant hover:text-primary hover:bg-primary-container"
+                            )}
+                        >
+                            {t.nav_trends}
+                        </Link>
+                        <Link
+                            href="/discovery?tab=gems"
+                            className={clsx(
+                                "px-6 py-2 text-sm font-bold rounded-full transition-all",
+                                activeTab === 'gems'
+                                    ? "bg-primary text-on-primary shadow-elevation-2"
+                                    : "text-on-surface-variant hover:text-primary hover:bg-primary-container"
+                            )}
+                        >
+                            {t.nav_gems}
+                        </Link>
                     </div>
                 </div>
 
@@ -95,5 +128,13 @@ export default function Navbar() {
                 </div>
             </div>
         </nav>
+    );
+}
+
+export default function Navbar() {
+    return (
+        <Suspense fallback={<div className="h-16" />}>
+            <NavbarContent />
+        </Suspense>
     );
 }

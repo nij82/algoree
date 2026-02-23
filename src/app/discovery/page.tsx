@@ -1,29 +1,33 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { getRelatedVideos } from '@/lib/youtube';
 import { YouTubeVideo } from '@/types/youtube';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import VideoCard, { VideoCardSkeleton } from '@/components/VideoCard';
 import { Sparkles, Compass, RefreshCw } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
-export default function DiscoveryPage() {
+function DiscoveryContent() {
     const { data: session, status } = useSession();
     const { t } = useTranslation();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'discovery';
+
     const [videos, setVideos] = useState<YouTubeVideo[]>([]);
     const [loading, setLoading] = useState(true);
 
     const loadFeed = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/discovery');
+            const res = await fetch(`/api/discovery?tab=${activeTab}`);
             const data = await res.json();
 
             if (data.error) throw new Error(data.error);
             setVideos(data);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
             console.error(error);
         } finally {
@@ -36,7 +40,7 @@ export default function DiscoveryPage() {
         if (status === 'authenticated') {
             loadFeed();
         }
-    }, [status]);
+    }, [status, activeTab]);
 
     const handleVideoSelect = (video: YouTubeVideo) => {
         router.push(`/watch/${video.id}`);
@@ -163,5 +167,13 @@ export default function DiscoveryPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function DiscoveryPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <DiscoveryContent />
+        </Suspense>
     );
 }

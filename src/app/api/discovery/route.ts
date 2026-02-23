@@ -10,17 +10,30 @@ export async function GET(req: NextRequest) {
         const session = await getServerSession(authOptions);
         const anySession = session as any;
 
+        const { searchParams } = new URL(req.url);
+        const tab = searchParams.get("tab") || "discovery";
+
         const trending = await getTrendingVideosKR();
 
+        // 1. Trends Tab: Pure trending list
+        if (tab === "trends") {
+            const { getTrendsList } = await import("@/lib/engine");
+            return NextResponse.json(await getTrendsList(trending));
+        }
+
+        // 2. Gems Tab: Weighted hidden gems
+        if (tab === "gems") {
+            const { getGemsList } = await import("@/lib/engine");
+            return NextResponse.json(await getGemsList(trending));
+        }
+
+        // 3. Discovery Tab (Default): Personalized filtering
         if (!anySession?.accessToken) {
-            // Not logged in: Return default ranked list
+            // Not logged in: Return shuffled trending
             return NextResponse.json(trending.sort(() => Math.random() - 0.5).slice(0, 50));
         }
 
-        // 2. Fetch User History
         const history = await getUserHistory(anySession.accessToken as string);
-
-        // 3. User Advanced Discovery Engine
         const discoveryList = await getAdvancedDiscoveryList(history, trending);
 
         return NextResponse.json(discoveryList);
