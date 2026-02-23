@@ -3,6 +3,16 @@ import { YouTubeVideo } from '@/types/youtube';
 const YOUTUBE_API_BASE_URL = 'https://www.googleapis.com/youtube/v3';
 const API_KEY = process.env.YOUTUBE_API_KEY;
 
+function parseDuration(durationStr: string): number {
+    if (!durationStr) return 0;
+    const match = durationStr.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+    if (!match) return 0;
+    const hours = (parseInt(match[1]) || 0);
+    const minutes = (parseInt(match[2]) || 0);
+    const seconds = (parseInt(match[3]) || 0);
+    return hours * 3600 + minutes * 60 + seconds;
+}
+
 export async function getTrendingVideos(regionCode = 'US', maxResults = 50): Promise<YouTubeVideo[]> {
     const params = new URLSearchParams({
         part: 'snippet,contentDetails,statistics',
@@ -19,14 +29,20 @@ export async function getTrendingVideos(regionCode = 'US', maxResults = 50): Pro
         throw new Error(data.error?.message || "YouTube API trending fetch failed");
     }
 
-    return data.items?.map((item: any) => ({
-        id: item.id,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.high.url,
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        description: item.snippet.description,
-    })) || [];
+    return data.items?.map((item: any) => {
+        const durationStr = item.contentDetails?.duration || '';
+        const durationSec = parseDuration(durationStr);
+        return {
+            id: item.id,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails.high.url,
+            channelTitle: item.snippet.channelTitle,
+            publishedAt: item.snippet.publishedAt,
+            description: item.snippet.description,
+            duration: durationStr,
+            isShort: durationSec > 0 && durationSec <= 61, // Allow 61s for typical Shorts padding
+        };
+    }) || [];
 }
 
 export async function getRelatedVideos(videoId: string, maxResults = 10, videoTitle?: string): Promise<YouTubeVideo[]> {
@@ -147,17 +163,23 @@ export async function getTrendingVideosKR(): Promise<YouTubeVideo[]> {
         items = [...items, ...(data2.items || [])];
     }
 
-    const videos: YouTubeVideo[] = items.map((item: any) => ({
-        id: item.id,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.high.url,
-        channelTitle: item.snippet.channelTitle,
-        channelId: item.snippet.channelId,
-        categoryId: item.snippet.categoryId,
-        publishedAt: item.snippet.publishedAt,
-        description: item.snippet.description,
-        statistics: item.statistics,
-    }));
+    const videos: YouTubeVideo[] = items.map((item: any) => {
+        const durationStr = item.contentDetails?.duration || '';
+        const durationSec = parseDuration(durationStr);
+        return {
+            id: item.id,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails.high.url,
+            channelTitle: item.snippet.channelTitle,
+            channelId: item.snippet.channelId,
+            categoryId: item.snippet.categoryId,
+            publishedAt: item.snippet.publishedAt,
+            description: item.snippet.description,
+            statistics: item.statistics,
+            duration: durationStr,
+            isShort: durationSec > 0 && durationSec <= 61,
+        };
+    });
 
     // 3. Supabase 캐시 업데이트 (upsert)
     await supabase.from('trending_pool').upsert([{

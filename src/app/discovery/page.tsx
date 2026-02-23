@@ -1,27 +1,30 @@
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { getRelatedVideos } from '@/lib/youtube';
 import { YouTubeVideo } from '@/types/youtube';
 import { useRouter, useSearchParams } from 'next/navigation';
 import VideoCard, { VideoCardSkeleton } from '@/components/VideoCard';
-import { Sparkles, Compass, RefreshCw } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Compass } from 'lucide-react';
+import clsx from 'clsx';
 
 function DiscoveryContent() {
     const { data: session, status } = useSession();
-    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const activeTab = searchParams.get('tab') || 'discovery';
+
+    // 비로그인 시 강제로 trends, 로그인 시 URL 파라미터 또는 trends 기본값
+    const activeTab = status === 'authenticated' ? (searchParams.get('tab') || 'trends') : 'trends';
 
     const [videos, setVideos] = useState<YouTubeVideo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showShortsOnly, setShowShortsOnly] = useState(false);
 
     const loadFeed = async () => {
         setLoading(true);
         try {
+            // maxResults를 100개로 요청 (API가 지원하도록 가정, 실제 구행 시 API 내부 로직이 처리)
             const res = await fetch(`/api/discovery?tab=${activeTab}`);
             const data = await res.json();
 
@@ -31,13 +34,12 @@ function DiscoveryContent() {
         } catch (error) {
             console.error(error);
         } finally {
-            // 부드러운 전환을 위해 약간의 지연 추가
-            setTimeout(() => setLoading(false), 800);
+            setTimeout(() => setLoading(false), 400);
         }
     };
 
     useEffect(() => {
-        if (status === 'authenticated') {
+        if (status !== 'loading' && activeTab !== 'about') {
             loadFeed();
         }
     }, [status, activeTab]);
@@ -63,98 +65,85 @@ function DiscoveryContent() {
         }
     };
 
-    if (status === 'unauthenticated') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-                <div className="w-24 h-24 bg-surface-container-high rounded-[32px] flex items-center justify-center mb-8 border border-outline-variant shadow-elevation-2">
-                    <Compass size={48} className="text-primary" />
-                </div>
-                <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter text-on-surface">{t.access_denied}</h2>
-                <p className="text-on-surface-variant max-w-md mb-10 font-medium font-sans">
-                    {t.access_desc}
-                </p>
+    const displayedVideos = showShortsOnly ? videos.filter(v => v.isShort) : videos;
+
+    const TabMenu = () => (
+        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-none">
+            {['trends', 'discovery', 'gems', 'about'].map(tab => (
                 <button
-                    onClick={() => signIn('google')}
-                    className="px-10 py-4 bg-primary text-on-primary font-black rounded-full hover:bg-primary/90 transition-all shadow-elevation-2 active:scale-95 uppercase tracking-tight"
+                    key={tab}
+                    onClick={() => router.push(`/discovery?tab=${tab}`)}
+                    className={clsx(
+                        "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
+                        activeTab === tab
+                            ? "bg-primary text-on-primary"
+                            : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+                    )}
                 >
-                    {t.access_btn}
+                    {tab === 'trends' ? '트렌드' :
+                        tab === 'discovery' ? '발견' :
+                            tab === 'gems' ? '숨은 보석' : '알고리 소개'}
                 </button>
-            </div>
-        );
+            ))}
+        </div>
+    );
+
+    if (status === 'loading') {
+        return <div className="min-h-screen bg-background pt-24 px-6 flex justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
     }
 
-    // Loading State with Skeleton UI
-    if (status === 'loading' || (loading && videos.length === 0)) {
+    if (activeTab === 'about' && status === 'authenticated') {
         return (
-            <div className="max-w-[1800px] mx-auto space-y-20 pb-32">
-                <div className="h-72 rounded-[48px] bg-surface-container-low border border-outline-variant/20 flex flex-col items-center justify-center gap-8 animate-pulse">
-                    <div className="w-16 h-16 bg-surface-container-highest rounded-2xl" />
-                    <div className="h-8 bg-surface-container-highest rounded-full w-64" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {[...Array(12)].map((_, i) => (
-                        <VideoCardSkeleton key={i} />
-                    ))}
+            <div className="max-w-4xl mx-auto pt-24 px-6 pb-32">
+                <TabMenu />
+                <div className="mt-12 space-y-8 text-center animate-fade-in-up">
+                    <div className="w-20 h-20 mx-auto bg-primary rounded-2xl flex items-center justify-center text-on-primary mb-6">
+                        <Compass size={40} />
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-black text-on-surface tracking-tight">알고리즘의 굴레에서 벗어나<br />새로운 시각을 제공합니다.</h1>
+                    <p className="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+                        Algoree는 당신이 항상 보던 것만 보여주는 추천 시스템에서 탈피하여,
+                        진짜 가치 있는 숨겨진 보석과 완전히 새로운 분야의 트렌드를 발견할 수 있도록 돕는
+                        미니멀리즘 비디오 탐색 플랫폼입니다.
+                    </p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-[1800px] mx-auto pb-32">
-            <div className="space-y-20">
-                {/* Hero Section (M3 Type) */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 pb-12 border-b border-outline-variant">
-                    <div className="space-y-6">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-container text-on-primary-container rounded-full text-[11px] font-black uppercase tracking-widest shadow-elevation-1">
-                            <Sparkles size={14} fill="currentColor" />
-                            {t.hero_badge}
-                        </div>
-                        <div className="space-y-2">
-                            <h1 className="text-7xl font-black tracking-tight leading-none uppercase text-on-surface">
-                                {t.hero_title} <span className="text-primary italic">{t.hero_title_accent}</span>
-                            </h1>
-                            <p className="text-on-surface-variant text-lg font-medium max-w-2xl leading-relaxed">
-                                {t.hero_desc.split(t.hero_desc_highlight)[0]}
-                                <span className="text-on-surface underline decoration-primary decoration-2 underline-offset-4">{t.hero_desc_highlight}</span>
-                                {t.hero_desc.split(t.hero_desc_highlight)[1]}
-                            </p>
-                        </div>
-                    </div>
+        <div className="max-w-[1800px] mx-auto pt-24 px-4 sm:px-6 pb-32">
 
-                    <div className="flex flex-wrap items-center gap-4 md:gap-6">
-                        <button
-                            disabled={loading || videos.length === 0}
-                            onClick={() => {
-                                setLoading(true);
-                                setTimeout(() => {
-                                    setVideos(prev => [...prev].sort(() => Math.random() - 0.5));
-                                    setLoading(false);
-                                }, 800);
-                            }}
-                            className="group flex items-center gap-4 px-8 py-5 bg-surface-container-highest text-primary hover:bg-primary hover:text-on-primary rounded-full transition-all duration-500 shadow-elevation-1 hover:shadow-elevation-3 active:scale-95 border border-outline-variant disabled:opacity-50"
-                        >
-                            <Compass size={20} className="group-hover:rotate-180 transition-transform duration-700" />
-                            <span className="text-base font-black uppercase tracking-tight">{t.btn_breaker}</span>
-                        </button>
+            {status === 'authenticated' && <TabMenu />}
 
-                        <button
-                            onClick={loadFeed}
-                            className="group flex items-center gap-4 px-10 py-5 bg-primary text-on-primary hover:bg-primary/90 rounded-full transition-all duration-300 shadow-elevation-2 hover:shadow-elevation-3 active:scale-95"
-                        >
-                            <span className="text-base font-black uppercase tracking-tight">{t.hero_btn}</span>
-                            <RefreshCw size={20} className="group-hover:rotate-180 transition-transform duration-700" />
-                        </button>
-                    </div>
+            {/* Filters Section */}
+            <div className="flex justify-between items-center mb-6">
+                <button
+                    onClick={() => setShowShortsOnly(!showShortsOnly)}
+                    className={clsx(
+                        "px-4 py-1.5 rounded-full text-sm font-bold border transition-colors",
+                        showShortsOnly
+                            ? "border-primary bg-primary text-on-primary"
+                            : "border-outline-variant text-on-surface-variant hover:border-outline hover:text-on-surface"
+                    )}
+                >
+                    {showShortsOnly ? '전체 보기' : '쇼츠만 보기'}
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+                    {[...Array(15)].map((_, i) => (
+                        <VideoCardSkeleton key={i} isShort={showShortsOnly} />
+                    ))}
                 </div>
-
-                {/* Main Grid: SaaS spacing */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
-                    {videos.map((video, index) => (
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+                    {displayedVideos.map((video, index) => (
                         <div
-                            key={video.id}
+                            key={video.id + index}
                             className="opacity-0 animate-fade-in-up"
-                            style={{ animationDelay: `${index * 50}ms` }}
+                            style={{ animationDelay: `${(index % 20) * 30}ms` }}
                         >
                             <VideoCard
                                 video={video}
@@ -164,8 +153,13 @@ function DiscoveryContent() {
                             />
                         </div>
                     ))}
+                    {displayedVideos.length === 0 && !loading && (
+                        <div className="col-span-full py-20 text-center text-on-surface-variant">
+                            조건에 맞는 영상이 없습니다.
+                        </div>
+                    )}
                 </div>
-            </div>
+            )}
         </div>
     );
 }

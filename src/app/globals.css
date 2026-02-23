@@ -3,40 +3,41 @@
 
 
 @theme {
-  /* SaaS Style - Deep Dark Premium */
-  --color-primary: #FFB3B8;
-  --color-on-primary: #680016;
-  --color-primary-container: #920023;
-  --color-on-primary-container: #FFDAD9;
+  /* Minimalist YouTube-style Theme */
+  --color-primary: #0F0F0F;
+  --color-on-primary: #FFFFFF;
+  --color-primary-container: #F2F2F2;
+  --color-on-primary-container: #0F0F0F;
 
-  --color-secondary: #D9C2C2;
-  --color-on-secondary: #3D2D2D;
-  --color-secondary-container: #564343;
-  --color-on-secondary-container: #FFDAD9;
+  --color-secondary: #0F0F0F;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #F2F2F2;
+  --color-on-secondary-container: #0F0F0F;
 
-  --color-surface: #1A1A1A;
-  /* Slightly lighter for cards */
-  --color-on-surface: #F0F0F0;
-  --color-surface-variant: #242424;
-  --color-on-surface-variant: #C2C2C2;
-  --color-background: #0F0F0F;
-  /* Deep Dark Grey */
-  --color-outline: #333333;
-  --color-outline-variant: #282828;
+  --color-surface: #FFFFFF;
+  --color-on-surface: #0F0F0F;
+  --color-surface-variant: #F2F2F2;
+  --color-on-surface-variant: #606060;
 
-  --color-error: #FFB4AB;
-  --color-error-container: #93000A;
-  --color-on-error: #690005;
-  --color-on-error-container: #FFDAD6;
+  --color-background: #FFFFFF;
+  --color-on-background: #0F0F0F;
 
-  --color-surface-container-low: #121212;
-  --color-surface-container: #161616;
-  --color-surface-container-high: #1E1E1E;
-  --color-surface-container-highest: #2A2A2A;
+  --color-outline: #CCCCCC;
+  --color-outline-variant: #E5E5E5;
 
-  --shadow-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.4), 0px 1px 2px 0px rgba(0, 0, 0, 0.6);
-  --shadow-elevation-2: 0px 2px 8px 2px rgba(0, 0, 0, 0.5), 0px 1px 3px 0px rgba(0, 0, 0, 0.8);
-  --shadow-elevation-3: 0px 4px 16px 4px rgba(0, 0, 0, 0.6), 0px 2px 6px 0px rgba(0, 0, 0, 0.9);
+  --color-error: #CC0000;
+  --color-error-container: #FCE8E6;
+  --color-on-error: #FFFFFF;
+  --color-on-error-container: #CC0000;
+
+  --color-surface-container-low: #F9F9F9;
+  --color-surface-container: #FFFFFF;
+  --color-surface-container-high: #EAEAEA;
+  --color-surface-container-highest: #E5E5E5;
+
+  --shadow-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
   /* Legacy/Next.js Compatibility */
   --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));

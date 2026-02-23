@@ -14,18 +14,18 @@ interface VideoCardProps {
     isSelected?: boolean;
 }
 
-export function VideoCardSkeleton() {
+export function VideoCardSkeleton({ isShort }: { isShort?: boolean }) {
     return (
-        <div className="flex flex-col gap-6 p-5 rounded-xl bg-surface border border-outline/5 animate-pulse">
-            <div className="aspect-video rounded-xl bg-surface-container-highest border border-outline-variant/10" />
-            <div className="flex gap-4 px-1">
-                <div className="flex-shrink-0 w-11 h-11 rounded-full bg-surface-container-highest" />
-                <div className="flex-1 space-y-4">
-                    <div className="h-4 bg-surface-container-highest rounded-full w-5/6" />
-                    <div className="space-y-2.5">
-                        <div className="h-3 bg-surface-container-highest rounded-full w-3/5" />
-                        <div className="h-2.5 bg-surface-container-highest rounded-full w-1/3" />
-                    </div>
+        <div className="flex flex-col gap-3 animate-pulse">
+            <div className={clsx(
+                "w-full rounded-xl bg-surface-container-highest",
+                isShort ? "aspect-[9/16]" : "aspect-video"
+            )} />
+            <div className="flex gap-3 pr-4">
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-highest" />
+                <div className="flex-1 space-y-2 mt-1">
+                    <div className="h-4 bg-surface-container-highest rounded w-5/6" />
+                    <div className="h-3 bg-surface-container-highest rounded w-1/2" />
                 </div>
             </div>
         </div>
@@ -39,112 +39,96 @@ export default function VideoCard({ video, onSeen, onPivot, onClick, isSelected 
     return (
         <div
             onClick={() => onClick(video)}
-            className={clsx(
-                "group flex flex-col gap-5 p-5 rounded-xl transition-all duration-300 cursor-pointer bg-surface border border-transparent hover-glow",
-                "hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] active:scale-[0.98]",
-                isSelected
-                    ? "ring-2 ring-primary bg-primary-container shadow-elevation-3 border-primary/20"
-                    : "hover:bg-surface-variant shadow-elevation-1"
-            )}
+            className="group flex flex-col gap-3 cursor-pointer"
         >
             {/* Thumbnail Container */}
-            <div
-                onClick={(e) => { e.stopPropagation(); onClick(video); }}
-                className="relative aspect-video rounded-xl overflow-hidden bg-surface-container-low border border-outline/5"
-            >
+            <div className={clsx(
+                "relative w-full overflow-hidden bg-surface-container-low transition-all duration-300",
+                video.isShort ? "aspect-[9/16] rounded-xl" : "aspect-video border-y border-outline-variant sm:border-x sm:rounded-xl",
+                isSelected && "ring-2 ring-primary"
+            )}>
                 <img
                     src={video.thumbnail}
                     alt={video.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
-                {/* Floating Badges */}
-                <div className="absolute top-2.5 right-2.5 flex flex-wrap justify-end gap-1.5 max-w-[80%]">
-                    {isGem && (
-                        <div className="px-2.5 py-1 bg-primary/80 backdrop-blur-md text-on-primary text-[10px] font-black rounded-lg flex items-center gap-1 shadow-sm border border-white/10">
-                            <Gem size={10} />
-                            {video.gemScore}
-                        </div>
-                    )}
-                    {video.tags?.slice(0, 2).map(tag => {
-                        const translatedTag = (t as any)[tag] || tag;
-                        const isInsight = tag.startsWith('tag_');
-                        return (
-                            <span
-                                key={tag}
-                                className={clsx(
-                                    "px-2 py-1 backdrop-blur-md text-[9px] font-bold rounded-lg border uppercase tracking-wider",
-                                    isInsight
-                                        ? "bg-rose-500/60 text-white border-rose-400/30"
-                                        : "bg-black/40 text-white border-white/10"
-                                )}
-                            >
-                                {translatedTag.replace('#', '')}
+                {/* Duration Badge / Floating Badges */}
+                <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1">
+                    {/* Custom badges from earlier */}
+                    <div className="flex gap-1 mb-1">
+                        {isGem && (
+                            <div className="px-1.5 py-0.5 bg-primary text-on-primary text-[10px] font-bold rounded">
+                                GEM
+                            </div>
+                        )}
+                        {video.tags?.slice(0, 1).map(tag => (
+                            <span key={tag} className="px-1.5 py-0.5 bg-black/80 text-white text-[10px] font-bold rounded">
+                                {(t as any)[tag]?.replace('#', '') || tag.replace('#', '')}
                             </span>
-                        );
-                    })}
+                        ))}
+                    </div>
+                    {/* YouTube Style Duration or Short indicator */}
+                    {video.duration && (
+                        <span className="px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
+                            {video.isShort ? "Shorts" : video.duration.replace("PT", "").toLowerCase()}
+                        </span>
+                    )}
                 </div>
 
-                {/* Quick Actions Overlay (M3 Style) */}
-                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onSeen(video.id, e); }}
-                        className="w-10 h-10 bg-surface-container-high text-on-surface rounded-full shadow-elevation-2 flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all active:scale-90"
-                        title={t.card_seen}
-                    >
-                        <EyeOff size={18} />
-                    </button>
-                    {/* Play Button Area - Now explicitly triggers onClick */}
-                    <div
-                        onClick={(e) => { e.stopPropagation(); onClick(video); }}
-                        className="w-12 h-12 bg-primary text-on-primary rounded-full shadow-elevation-3 flex items-center justify-center group-hover:scale-110 transition-transform cursor-pointer active:scale-95"
-                    >
-                        <Play size={24} fill="currentColor" />
+                {/* Quick Actions Overlay (Minimalist) */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onSeen(video.id, e); }}
+                            className="w-10 h-10 bg-white/90 text-black rounded-full shadow flex items-center justify-center hover:scale-110 transition-transform"
+                            title={t.card_seen}
+                        >
+                            <EyeOff size={18} />
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onPivot(video.id, e); }}
+                            className="w-10 h-10 bg-white/90 text-black rounded-full shadow flex items-center justify-center hover:scale-110 transition-transform"
+                            title={t.card_pivot}
+                        >
+                            <RefreshCw size={18} />
+                        </button>
                     </div>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onPivot(video.id, e); }}
-                        className="w-10 h-10 bg-surface-container-high text-on-surface rounded-full shadow-elevation-2 flex items-center justify-center hover:bg-secondary hover:text-on-secondary transition-all active:scale-90"
-                        title={t.card_pivot}
-                    >
-                        <RefreshCw size={18} />
-                    </button>
                 </div>
             </div>
 
             {/* Content Section */}
-            <div className="flex gap-4">
-                {/* Avatar */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-secondary-container border border-outline-variant flex items-center justify-center overflow-hidden shadow-elevation-1">
-                    <span className="text-xs font-black text-on-secondary-container">
-                        {video.channelTitle.substring(0, 2).toUpperCase()}
+            <div className="flex gap-3 px-1 sm:px-0">
+                {/* Channel Avatar */}
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-bold text-on-surface-variant">
+                        {video.channelTitle.substring(0, 1).toUpperCase()}
                     </span>
                 </div>
 
-                <div className="flex-1 min-w-0">
-                    <h3
-                        onClick={(e) => { e.stopPropagation(); onClick(video); }}
-                        className={clsx(
-                            "font-bold text-[17px] leading-[1.35] line-clamp-2 transition-colors cursor-pointer tracking-tight",
-                            isSelected ? "text-on-primary-container" : "text-on-surface group-hover:text-primary"
-                        )}
-                    >
+                <div className="flex-1 min-w-0 pr-6 relative">
+                    <h3 className={clsx(
+                        "font-medium text-sm sm:text-base leading-tight line-clamp-2",
+                        isSelected ? "text-primary" : "text-on-surface"
+                    )}>
                         {video.title}
                     </h3>
-                    <div className="mt-2.5 flex flex-col gap-1">
-                        <p className="text-[14px] text-[#AAAAAA] font-semibold truncate hover:text-on-surface transition-colors">
+                    <div className="mt-1 flex flex-col sm:flex-row sm:items-center text-xs text-on-surface-variant gap-0.5 sm:gap-1">
+                        <p className="truncate hover:text-on-surface transition-colors">
                             {video.channelTitle}
                         </p>
-                        <div className="flex items-center text-[12px] text-[#AAAAAA]/60 font-medium">
+                        <div className="flex items-center">
+                            <span className="hidden sm:inline mx-1">•</span>
                             <span>{parseInt(video.statistics?.viewCount || "0").toLocaleString()} {t.card_views}</span>
-                            <span className="mx-2 opacity-30">•</span>
+                            <span className="mx-1">•</span>
                             <span>{new Date(video.publishedAt).toLocaleDateString()}</span>
                         </div>
                     </div>
-                </div>
 
-                <button className="h-fit p-1 text-on-surface-variant hover:text-on-surface transition-colors rounded-full hover:bg-surface-container-highest">
-                    <MoreVertical size={20} />
-                </button>
+                    <button className="absolute top-0 -right-2 p-1 text-on-surface-variant hover:text-on-surface hidden group-hover:block">
+                        <MoreVertical size={16} />
+                    </button>
+                </div>
             </div>
         </div>
     );

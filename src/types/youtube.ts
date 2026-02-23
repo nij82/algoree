@@ -7,6 +7,8 @@ export interface YouTubeVideo {
   categoryId: string;
   publishedAt: string;
   description: string;
+  duration?: string; // e.g. "PT4M13S"
+  isShort?: boolean; // Calculated from duration <= 60s
   statistics?: {
     viewCount: string;
     likeCount: string;
