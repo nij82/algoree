@@ -50,6 +50,10 @@ export async function getTrendingVideos(regionCode = 'US', maxResults = 50): Pro
     return data.items?.map((item: any) => {
         const durationStr = item.contentDetails?.duration || '';
         const durationSec = parseDuration(durationStr);
+        const title = item.snippet?.title?.toLowerCase() || '';
+        const tags = item.snippet?.tags?.map((t: string) => t.toLowerCase()) || [];
+        const isShort = (durationSec > 0 && durationSec <= 61) || title.includes('shorts') || tags.includes('shorts');
+
         return {
             id: item.id,
             title: item.snippet.title,
@@ -58,7 +62,45 @@ export async function getTrendingVideos(regionCode = 'US', maxResults = 50): Pro
             publishedAt: item.snippet.publishedAt,
             description: item.snippet.description,
             duration: durationStr,
-            isShort: durationSec > 0 && durationSec <= 61, // Allow 61s for typical Shorts padding
+            isShort: isShort,
+        };
+    }) || [];
+}
+
+export async function getCategoryTrendingVideos(categoryId: string, maxResults = 50): Promise<YouTubeVideo[]> {
+    const params = new URLSearchParams({
+        part: 'snippet,contentDetails,statistics',
+        chart: 'mostPopular',
+        regionCode: 'KR',
+        videoCategoryId: categoryId,
+        maxResults: maxResults.toString(),
+        key: API_KEY || '',
+    });
+
+    const res = await fetch(`${YOUTUBE_API_BASE_URL}/videos?${params}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data.error?.message || "YouTube API category trending fetch failed");
+    }
+
+    return data.items?.map((item: any) => {
+        const durationStr = item.contentDetails?.duration || '';
+        const durationSec = parseDuration(durationStr);
+        const title = item.snippet?.title?.toLowerCase() || '';
+        const tags = item.snippet?.tags?.map((t: string) => t.toLowerCase()) || [];
+        const isShort = (durationSec > 0 && durationSec <= 61) || title.includes('shorts') || tags.includes('shorts');
+        return {
+            id: item.id,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails.high.url,
+            channelTitle: item.snippet.channelTitle,
+            categoryId: item.snippet.categoryId,
+            channelId: item.snippet.channelId,
+            publishedAt: item.snippet.publishedAt,
+            description: item.snippet.description,
+            duration: durationStr,
+            isShort: isShort,
         };
     }) || [];
 }
@@ -184,6 +226,10 @@ export async function getTrendingVideosKR(): Promise<YouTubeVideo[]> {
     const videos: YouTubeVideo[] = items.map((item: any) => {
         const durationStr = item.contentDetails?.duration || '';
         const durationSec = parseDuration(durationStr);
+        const title = item.snippet?.title?.toLowerCase() || '';
+        const tags = item.snippet?.tags?.map((t: string) => t.toLowerCase()) || [];
+        const isShort = (durationSec > 0 && durationSec <= 61) || title.includes('shorts') || tags.includes('shorts');
+
         return {
             id: item.id,
             title: item.snippet.title,
@@ -195,7 +241,7 @@ export async function getTrendingVideosKR(): Promise<YouTubeVideo[]> {
             description: item.snippet.description,
             statistics: item.statistics,
             duration: durationStr,
-            isShort: durationSec > 0 && durationSec <= 61,
+            isShort: isShort,
         };
     });
 

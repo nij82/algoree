@@ -58,9 +58,12 @@ export async function GET(req: NextRequest) {
         // 3. Category Filter
         if (tab.startsWith("cat_")) {
             const catId = tab.replace("cat_", "");
-            // Filter trending or find related in that category? 
-            // For now, filter trending pool by category
-            return NextResponse.json(trending.filter(v => v.categoryId === catId));
+            const { getCategoryTrendingVideos } = await import("@/lib/youtube");
+            const catTrending = await getCategoryTrendingVideos(catId);
+
+            // 유연한 처리: 카테고리 탭에서는 무조건 데이터가 나오도록, 
+            // 구독/시청 완벽 배제 대신 찐 인기영상을 그대로 뿌려줍니다. (빈 결과 방지)
+            return NextResponse.json(catTrending);
         }
 
         const discoveryList = await getAdvancedDiscoveryList(history, trending);

@@ -17,7 +17,7 @@ export default function Footer() {
                         <span className="font-black tracking-widest uppercase italic text-white/60 group-hover:text-primary transition-colors text-sm">Algoree</span>
                     </div>
                     <p className="text-on-surface-variant text-xs font-medium max-w-xs mt-2">
-                        알고리즘이 주는 뻔한 일상에서 벗어나기 위해 만든 서비스, 알고리(Algoree)
+                        알고리즘에서 벗어난 새로운 발견
                     </p>
                 </div>
 

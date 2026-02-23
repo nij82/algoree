@@ -56,7 +56,7 @@ function FeedContent() {
   }, [status]);
 
   useEffect(() => {
-    if (status !== 'loading' && activeTab !== 'about') {
+    if (status !== 'loading') {
       loadFeed();
     }
   }, [status, activeTab]);
@@ -82,7 +82,7 @@ function FeedContent() {
     }
   };
 
-  const displayedVideos = showShortsOnly ? videos.filter(v => v.isShort) : videos;
+  const displayedVideos = showShortsOnly ? videos.filter(v => v.isShort) : videos.filter(v => !v.isShort);
 
   const TabMenu = () => (
     <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-none">
@@ -119,15 +119,6 @@ function FeedContent() {
         </button>
       ))}
 
-      <button
-        onClick={() => { setShowShortsOnly(false); router.push(`/?tab=about`); }}
-        className={clsx(
-          "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
-          (activeTab === 'about') ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
-        )}
-      >
-        알고리 소개
-      </button>
     </div>
   );
 
@@ -140,51 +131,37 @@ function FeedContent() {
 
       {status === 'authenticated' && <TabMenu />}
 
-      {activeTab === 'about' ? (
-        <div className="mt-12 space-y-8 text-center animate-fade-in-up">
-          <div className="w-20 h-20 mx-auto bg-primary rounded-2xl flex items-center justify-center text-on-primary mb-6">
-            <Compass size={40} />
+      <>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+            {[...Array(20)].map((_, i) => (
+              <VideoCardSkeleton key={i} isShort={showShortsOnly} />
+            ))}
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-on-surface tracking-tight">알고리즘의 굴레에서 벗어나<br />새로운 시각을 제공합니다.</h1>
-          <p className="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-            Algoree는 당신이 항상 보던 것만 보여주는 추천 시스템에서 탈피하여,
-            진짜 가치 있는 숨겨진 보석과 완전히 새로운 분야의 트렌드를 발견할 수 있도록 돕는
-            미니멀리즘 비디오 탐색 플랫폼입니다.
-          </p>
-        </div>
-      ) : (
-        <>
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
-              {[...Array(20)].map((_, i) => (
-                <VideoCardSkeleton key={i} isShort={showShortsOnly} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
-              {displayedVideos.map((video, index) => (
-                <div
-                  key={video.id + index}
-                  className="opacity-0 animate-fade-in-up"
-                  style={{ animationDelay: `${(index % 20) * 30}ms` }}
-                >
-                  <VideoCard
-                    video={video}
-                    onSeen={handleSeen}
-                    onPivot={handlePivot}
-                    onClick={handleVideoSelect}
-                  />
-                </div>
-              ))}
-              {displayedVideos.length === 0 && (
-                <div className="col-span-full py-20 text-center text-on-surface-variant">
-                  조건에 맞는 영상이 없습니다.
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+            {displayedVideos.map((video, index) => (
+              <div
+                key={video.id + index}
+                className="opacity-0 animate-fade-in-up"
+                style={{ animationDelay: `${(index % 20) * 30}ms` }}
+              >
+                <VideoCard
+                  video={video}
+                  onSeen={handleSeen}
+                  onPivot={handlePivot}
+                  onClick={handleVideoSelect}
+                />
+              </div>
+            ))}
+            {displayedVideos.length === 0 && (
+              <div className="col-span-full py-20 text-center text-on-surface-variant">
+                조건에 맞는 영상이 없습니다.
+              </div>
+            )}
+          </div>
+        )}
+      </>
     </div>
   );
 }
