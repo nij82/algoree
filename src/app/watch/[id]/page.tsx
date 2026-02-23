@@ -96,7 +96,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
                     {error} Check if your YouTube API key is correctly configured.
                 </p>
                 <button
-                    onClick={() => router.push('/discovery')}
+                    onClick={() => router.push('/')}
                     className="px-10 py-4 bg-primary text-on-primary font-black rounded-full hover:bg-primary/90 transition-all shadow-elevation-2 active:scale-95 uppercase tracking-tight"
                 >
                     {t.watch_back}

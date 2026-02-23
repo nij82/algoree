@@ -12,30 +12,41 @@ export async function GET(req: NextRequest) {
 
         const { searchParams } = new URL(req.url);
         const tab = searchParams.get("tab") || "discovery";
-
         const trending = await getTrendingVideosKR();
 
-        // 1. Trends Tab: Pure trending list
-        if (tab === "trends") {
+        // 1. Trending Tab: Pure trending list (100 videos)
+        if (tab === "trends" || (!anySession?.accessToken)) {
             const { getTrendsList } = await import("@/lib/engine");
             return NextResponse.json(await getTrendsList(trending));
         }
 
-        // 2. Gems Tab: Weighted hidden gems
-        if (tab === "gems") {
-            const { getGemsList } = await import("@/lib/engine");
-            return NextResponse.json(await getGemsList(trending));
-        }
-
-        // 3. Discovery Tab (Default): Personalized filtering
-        if (!anySession?.accessToken) {
-            // Not logged in: Return shuffled trending
-            return NextResponse.json(trending.sort(() => Math.random() - 0.5).slice(0, 50));
-        }
-
+        // 2. Categories / History Logic for Auth Users
         const history = await getUserHistory(anySession.accessToken as string);
-        const discoveryList = await getAdvancedDiscoveryList(history, trending);
 
+        // Dynamic categories extraction
+        if (tab === "categories") {
+            // Extract top 5 categories from history
+            const catCount: Record<string, number> = {};
+            history.forEach(v => {
+                if (v.categoryId) catCount[v.categoryId] = (catCount[v.categoryId] || 0) + 1;
+            });
+            const topCategories = Object.entries(catCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(entry => entry[0]);
+
+            return NextResponse.json({ categories: topCategories });
+        }
+
+        // 3. Category Filter
+        if (tab.startsWith("cat_")) {
+            const catId = tab.replace("cat_", "");
+            // Filter trending or find related in that category? 
+            // For now, filter trending pool by category
+            return NextResponse.json(trending.filter(v => v.categoryId === catId));
+        }
+
+        const discoveryList = await getAdvancedDiscoveryList(history, trending);
         return NextResponse.json(discoveryList);
     } catch (error: any) {
         console.error("Discovery API Error Full:", error);

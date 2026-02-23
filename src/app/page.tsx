@@ -1,72 +1,198 @@
-import Link from 'next/link';
-import { Compass, ArrowRight, Zap, EyeOff, Radio } from 'lucide-react';
+"use client";
 
-export default function LandingPage() {
+import { useEffect, useState, Suspense } from 'react';
+import { useSession } from 'next-auth/react';
+import { getRelatedVideos } from '@/lib/youtube';
+import { YouTubeVideo } from '@/types/youtube';
+import { useRouter, useSearchParams } from 'next/navigation';
+import VideoCard, { VideoCardSkeleton } from '@/components/VideoCard';
+import { Compass } from 'lucide-react';
+import clsx from 'clsx';
+
+function FeedContent() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 비로그인 시 강제로 trends, 로그인 시 URL 파라미터 또는 trends 기본값
+  const activeTab = status === 'authenticated' ? (searchParams.get('tab') || 'trends') : 'trends';
+
+  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showShortsOnly, setShowShortsOnly] = useState(false);
+
+  const loadFeed = async () => {
+    setLoading(true);
+    try {
+      // Antigra Refactoring: Always fetch from discovery API which handles trending for unauth
+      const res = await fetch(`/api/discovery?tab=${activeTab}`);
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+      setVideos(data);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTimeout(() => setLoading(false), 400);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const res = await fetch('/api/discovery?tab=categories');
+      const data = await res.json();
+      if (data.categories) setCategories(data.categories);
+    } catch (e) {
+      console.error("Failed to load categories", e);
+    }
+  };
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadCategories();
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== 'loading' && activeTab !== 'about') {
+      loadFeed();
+    }
+  }, [status, activeTab]);
+
+  const handleVideoSelect = (video: YouTubeVideo) => {
+    router.push(`/watch/${video.id}`);
+  };
+
+  const handleSeen = (id: string, e: React.MouseEvent) => {
+    setVideos(prev => prev.filter(v => v.id !== id));
+  };
+
+  const handlePivot = async (id: string, e: React.MouseEvent) => {
+    setLoading(true);
+    try {
+      const related = await getRelatedVideos(id, 20);
+      setVideos(related);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayedVideos = showShortsOnly ? videos.filter(v => v.isShort) : videos;
+
+  const TabMenu = () => (
+    <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-none">
+      <button
+        onClick={() => { setShowShortsOnly(false); router.push(`/?tab=trends`); }}
+        className={clsx(
+          "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
+          (activeTab === 'trends' && !showShortsOnly) ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+        )}
+      >
+        실시간 인기
+      </button>
+
+      <button
+        onClick={() => { setShowShortsOnly(true); router.push(`/?tab=trends`); }}
+        className={clsx(
+          "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
+          (showShortsOnly) ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+        )}
+      >
+        쇼츠
+      </button>
+
+      {categories.map(catId => (
+        <button
+          key={catId}
+          onClick={() => { setShowShortsOnly(false); router.push(`/?tab=cat_${catId}`); }}
+          className={clsx(
+            "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
+            (activeTab === `cat_${catId}`) ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+          )}
+        >
+          #{catId}
+        </button>
+      ))}
+
+      <button
+        onClick={() => { setShowShortsOnly(false); router.push(`/?tab=about`); }}
+        className={clsx(
+          "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
+          (activeTab === 'about') ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+        )}
+      >
+        알고리 소개
+      </button>
+    </div>
+  );
+
+  if (status === 'loading') {
+    return <div className="min-h-screen bg-background pt-24 px-6 flex justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
+  }
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Background Gradients */}
-      <div className="absolute top-0 -left-4 w-72 h-72 bg-rose-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-      <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
+    <div className="max-w-[1800px] mx-auto pt-8 px-4 sm:px-6 pb-32">
 
-      <div className="relative pt-20 pb-16 sm:pt-32 sm:pb-24">
-        <div className="text-center">
-          <h1 className="text-5xl sm:text-7xl font-black tracking-tight mb-8">
-            <span className="block text-white">Break the</span>
-            <span className="block bg-clip-text text-transparent bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500">
-              Algorithm Bubble
-            </span>
-          </h1>
+      {status === 'authenticated' && <TabMenu />}
 
-          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-gray-400 mb-12 px-4">
-            YouTube algorithms keep you in a loop. <span className="text-white font-semibold">Algoree</span> finds the unknown, the hidden gems, and the trends you never saw coming.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/discovery"
-              className="group flex items-center gap-2 px-8 py-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl transition-all hover:scale-105 shadow-lg shadow-rose-500/25"
-            >
-              Start Discovering
-              <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <button className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl transition-all border border-white/10">
-              How it works
-            </button>
+      {activeTab === 'about' ? (
+        <div className="mt-12 space-y-8 text-center animate-fade-in-up">
+          <div className="w-20 h-20 mx-auto bg-primary rounded-2xl flex items-center justify-center text-on-primary mb-6">
+            <Compass size={40} />
           </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-on-surface tracking-tight">알고리즘의 굴레에서 벗어나<br />새로운 시각을 제공합니다.</h1>
+          <p className="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+            Algoree는 당신이 항상 보던 것만 보여주는 추천 시스템에서 탈피하여,
+            진짜 가치 있는 숨겨진 보석과 완전히 새로운 분야의 트렌드를 발견할 수 있도록 돕는
+            미니멀리즘 비디오 탐색 플랫폼입니다.
+          </p>
         </div>
-
-        {/* Features Grid */}
-        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-          <FeatureCard
-            icon={<EyeOff className="text-rose-500" />}
-            title="Zero Repetition"
-            description="We filter out every single video you've ever watched. Only fresh content here."
-          />
-          <FeatureCard
-            icon={<Radio className="text-blue-500" />}
-            title="Trend-Based"
-            description="Starting from 100 real-time trends, we branch out to find unique content."
-          />
-          <FeatureCard
-            icon={<Zap className="text-purple-500" />}
-            title="A→B→C Logic"
-            description="Our engine pivots through related connections to discover deeper content."
-          />
-        </div>
-      </div>
+      ) : (
+        <>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+              {[...Array(20)].map((_, i) => (
+                <VideoCardSkeleton key={i} isShort={showShortsOnly} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-10">
+              {displayedVideos.map((video, index) => (
+                <div
+                  key={video.id + index}
+                  className="opacity-0 animate-fade-in-up"
+                  style={{ animationDelay: `${(index % 20) * 30}ms` }}
+                >
+                  <VideoCard
+                    video={video}
+                    onSeen={handleSeen}
+                    onPivot={handlePivot}
+                    onClick={handleVideoSelect}
+                  />
+                </div>
+              ))}
+              {displayedVideos.length === 0 && (
+                <div className="col-span-full py-20 text-center text-on-surface-variant">
+                  조건에 맞는 영상이 없습니다.
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+export default function HomePage() {
   return (
-    <div className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-white/20 transition-all hover:-translate-y-1">
-      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6">
-        {icon}
-      </div>
-      <h3 className="text-xl font-bold mb-3">{title}</h3>
-      <p className="text-gray-400 leading-relaxed">{description}</p>
-    </div>
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <FeedContent />
+    </Suspense>
   );
 }

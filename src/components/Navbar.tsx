@@ -41,8 +41,8 @@ function NavbarContent() {
                 </div>
 
                 {/* RIGHT: Auth & Profile */}
-                <div className="flex items-center justify-end gap-4">
-                    <button className="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container hidden sm:block">
+                <div className="flex items-center justify-end gap-3 sm:gap-5">
+                    <button className="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container">
                         <Search size={22} />
                     </button>
 
@@ -52,7 +52,7 @@ function NavbarContent() {
                                 <img
                                     src={session.user.image}
                                     alt={session.user.name || "User"}
-                                    className="w-8 h-8 rounded-full border border-outline-variant object-cover"
+                                    className="w-8 h-8 rounded-full border border-white/10 object-cover"
                                 />
                             ) : (
                                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
@@ -64,7 +64,6 @@ function NavbarContent() {
                             <button
                                 onClick={() => signOut()}
                                 className="w-8 h-8 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors flex items-center justify-center"
-                                title={t.nav_sign_out}
                             >
                                 <LogOut size={18} />
                             </button>
@@ -72,16 +71,12 @@ function NavbarContent() {
                     ) : (
                         <button
                             onClick={() => signIn('google')}
-                            className="flex items-center gap-2 px-4 py-2 border border-outline-variant text-primary text-sm font-medium rounded-full hover:bg-surface-variant transition-colors whitespace-nowrap"
+                            className="flex items-center gap-2 px-4 py-2 bg-on-surface text-background text-sm font-bold rounded-full hover:opacity-90 transition-all active:scale-95 whitespace-nowrap"
                         >
                             <LogIn size={16} />
-                            {t.nav_sign_in}
+                            로그인
                         </button>
                     )}
-
-                    <button className="md:hidden text-on-surface p-2 ml-2">
-                        <Menu size={24} />
-                    </button>
                 </div>
             </div>
         </nav>
