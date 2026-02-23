@@ -82,8 +82,8 @@ export default function DiscoveryPage() {
     // Loading State with Skeleton UI
     if (status === 'loading' || (loading && videos.length === 0)) {
         return (
-            <div className="max-w-[1600px] mx-auto space-y-16 pb-32">
-                <div className="h-64 rounded-[48px] bg-surface-container-low border border-outline-variant/30 flex flex-col items-center justify-center gap-6 animate-pulse">
+            <div className="max-w-[1800px] mx-auto space-y-20 pb-32">
+                <div className="h-72 rounded-[48px] bg-surface-container-low border border-outline-variant/20 flex flex-col items-center justify-center gap-8 animate-pulse">
                     <div className="w-16 h-16 bg-surface-container-highest rounded-2xl" />
                     <div className="h-8 bg-surface-container-highest rounded-full w-64" />
                 </div>
@@ -97,8 +97,8 @@ export default function DiscoveryPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto pb-32">
-            <div className="space-y-16">
+        <div className="max-w-[1800px] mx-auto pb-32">
+            <div className="space-y-20">
                 {/* Hero Section (M3 Type) */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 pb-12 border-b border-outline-variant">
                     <div className="space-y-6">
@@ -144,16 +144,21 @@ export default function DiscoveryPage() {
                     </div>
                 </div>
 
-                {/* Main Grid: 4 columns on PC, 1 on Mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {videos.map(video => (
-                        <VideoCard
+                {/* Main Grid: SaaS spacing */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
+                    {videos.map((video, index) => (
+                        <div
                             key={video.id}
-                            video={video}
-                            onSeen={handleSeen}
-                            onPivot={handlePivot}
-                            onClick={handleVideoSelect}
-                        />
+                            className="opacity-0 animate-fade-in-up"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                            <VideoCard
+                                video={video}
+                                onSeen={handleSeen}
+                                onPivot={handlePivot}
+                                onClick={handleVideoSelect}
+                            />
+                        </div>
                     ))}
                 </div>
             </div>

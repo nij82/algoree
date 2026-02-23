@@ -1,10 +1,8 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import AuthProvider from '@/components/AuthProvider'
 import Navbar from '@/components/Navbar'
 
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Algoree | Discover YouTube',
@@ -20,10 +18,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-black text-white min-h-screen selection:bg-rose-500/30`}>
+      <body className="bg-background text-on-surface min-h-screen selection:bg-rose-500/30">
         <AuthProvider>
           <Navbar />
-          <main className="pt-28 px-6">
+          <main className="pt-32 pb-16 px-6 md:px-12 lg:px-16 max-w-[1920px] mx-auto">
             {children}
           </main>
           <Footer />

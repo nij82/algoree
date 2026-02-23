@@ -1,7 +1,9 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import "tailwindcss";
 
+
 @theme {
-  /* Material Design 3 Tokens - Deep Dark Premium */
+  /* SaaS Style - Deep Dark Premium */
   --color-primary: #FFB3B8;
   --color-on-primary: #680016;
   --color-primary-container: #920023;
@@ -12,12 +14,14 @@
   --color-secondary-container: #564343;
   --color-on-secondary-container: #FFDAD9;
 
-  --color-surface: #0A0A0A;
+  --color-surface: #1A1A1A;
+  /* Slightly lighter for cards */
   --color-on-surface: #F0F0F0;
-  --color-surface-variant: #1E1E1E;
+  --color-surface-variant: #242424;
   --color-on-surface-variant: #C2C2C2;
-  --color-background: #050505;
-  --color-outline: #444444;
+  --color-background: #0F0F0F;
+  /* Deep Dark Grey */
+  --color-outline: #333333;
   --color-outline-variant: #282828;
 
   --color-error: #FFB4AB;
@@ -25,10 +29,10 @@
   --color-on-error: #690005;
   --color-on-error-container: #FFDAD6;
 
-  --color-surface-container-low: #0F0F0F;
-  --color-surface-container: #121212;
-  --color-surface-container-high: #1A1A1A;
-  --color-surface-container-highest: #222222;
+  --color-surface-container-low: #121212;
+  --color-surface-container: #161616;
+  --color-surface-container-high: #1E1E1E;
+  --color-surface-container-highest: #2A2A2A;
 
   --shadow-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.4), 0px 1px 2px 0px rgba(0, 0, 0, 0.6);
   --shadow-elevation-2: 0px 2px 8px 2px rgba(0, 0, 0, 0.5), 0px 1px 3px 0px rgba(0, 0, 0, 0.8);
@@ -42,7 +46,10 @@
 @layer base {
   body {
     @apply bg-background text-on-surface;
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -67,5 +74,30 @@
     100% {
       transform: translate(0px, 0px) scale(1);
     }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .hover-glow {
+    transition: box-shadow 0.3s ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 20px 2px rgba(255, 179, 184, 0.15);
+    /* Using primary color with low opacity */
   }
 }
