@@ -12,6 +12,13 @@ export async function GET(req: NextRequest) {
 
         const { searchParams } = new URL(req.url);
         const tab = searchParams.get("tab") || "discovery";
+
+        if (tab === "shorts_strict") {
+            const { getTrendingShortsKR } = await import("@/lib/youtube");
+            const shorts = await getTrendingShortsKR();
+            return NextResponse.json(shorts);
+        }
+
         const trending = await getTrendingVideosKR();
 
         // 1. Trending Tab: Pure trending list (100 videos)

@@ -255,6 +255,88 @@ export async function getTrendingVideosKR(): Promise<YouTubeVideo[]> {
     return videos;
 }
 
+export async function getTrendingShortsKR(): Promise<YouTubeVideo[]> {
+    // 1. Supabase 캐시 확인
+    const { data: cache } = await supabase
+        .from('trending_pool')
+        .select('*')
+        .eq('id', 'kr_shorts')
+        .single();
+
+    if (cache && (new Date().getTime() - new Date(cache.updated_at).getTime() < 3600000)) {
+        return cache.data as YouTubeVideo[];
+    }
+
+    // 2. 캐시 없거나 만료됨 -> YouTube API 딥 서치 (여러 페이지 순회)
+    let allShorts: YouTubeVideo[] = [];
+    let pageToken = '';
+    const maxPages = 4; // Fetch up to ~200 trending videos to filter shorts
+
+    for (let i = 0; i < maxPages; i++) {
+        const params = new URLSearchParams({
+            part: 'snippet,contentDetails,statistics',
+            chart: 'mostPopular',
+            regionCode: 'KR',
+            maxResults: '50',
+            key: API_KEY || '',
+        });
+        if (pageToken) params.set('pageToken', pageToken);
+
+        const res = await fetch(`${YOUTUBE_API_BASE_URL}/videos?${params}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error("YouTube Shorts Fetch Error:", data.error);
+            break;
+        }
+
+        const items = data.items || [];
+
+        const pageShorts = items.map((item: any) => {
+            const durationStr = item.contentDetails?.duration || '';
+            const durationSec = parseDuration(durationStr);
+            const title = item.snippet?.title?.toLowerCase() || '';
+            const tags = item.snippet?.tags?.map((t: string) => t.toLowerCase()) || [];
+            const isShort = (durationSec > 0 && durationSec <= 61) || title.includes('shorts') || tags.includes('shorts');
+
+            if (!isShort) return null;
+
+            return {
+                id: item.id,
+                title: item.snippet.title,
+                thumbnail: item.snippet.thumbnails.high.url,
+                channelTitle: item.snippet.channelTitle,
+                channelId: item.snippet.channelId,
+                categoryId: item.snippet.categoryId,
+                publishedAt: item.snippet.publishedAt,
+                description: item.snippet.description,
+                statistics: item.statistics,
+                duration: durationStr,
+                isShort: true,
+            };
+        }).filter((v: any) => v !== null) as YouTubeVideo[];
+
+        allShorts = [...allShorts, ...pageShorts];
+
+        if (data.nextPageToken) {
+            pageToken = data.nextPageToken;
+        } else {
+            break;
+        }
+    }
+
+    // 3. Supabase 캐시 업데이트
+    if (allShorts.length > 0) {
+        await supabase.from('trending_pool').upsert([{
+            id: 'kr_shorts',
+            data: allShorts,
+            updated_at: new Date().toISOString()
+        }]);
+    }
+
+    return allShorts;
+}
+
 /**
  * 비디오 아이디 목록으로 상세 통계를 포함한 정보를 가져온다.
  */

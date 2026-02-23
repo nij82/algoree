@@ -12,6 +12,7 @@ interface VideoCardProps {
     onPivot: (id: string, e: React.MouseEvent) => void;
     onClick: (video: YouTubeVideo) => void;
     isSelected?: boolean;
+    rank?: number;
 }
 
 export function VideoCardSkeleton({ isShort }: { isShort?: boolean }) {
@@ -32,7 +33,7 @@ export function VideoCardSkeleton({ isShort }: { isShort?: boolean }) {
     );
 }
 
-export default function VideoCard({ video, onSeen, onPivot, onClick, isSelected }: VideoCardProps) {
+export default function VideoCard({ video, onSeen, onPivot, onClick, isSelected, rank }: VideoCardProps) {
     const isGem = video.gemScore && video.gemScore > 50;
     const { t } = useTranslation();
 
@@ -53,8 +54,15 @@ export default function VideoCard({ video, onSeen, onPivot, onClick, isSelected 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
+                {/* Ranking Badge */}
+                {rank !== undefined && (
+                    <div className="absolute top-2 left-2 bg-black/60 text-white font-bold text-xs sm:text-sm px-2 py-1 rounded backdrop-blur-sm z-10 shadow-sm flex items-center justify-center min-w-[28px]">
+                        {rank}
+                    </div>
+                )}
+
                 {/* Duration Badge / Floating Badges */}
-                <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1">
+                <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1 z-10">
                     {/* Custom badges from earlier */}
                     <div className="flex gap-1 mb-1">
                         {isGem && (
