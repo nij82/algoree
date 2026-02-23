@@ -18,7 +18,7 @@ function FeedContent() {
   const activeTab = status === 'authenticated' ? (searchParams.get('tab') || 'trends') : 'trends';
 
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShortsOnly, setShowShortsOnly] = useState(false);
 
@@ -106,16 +106,16 @@ function FeedContent() {
         쇼츠
       </button>
 
-      {categories.map(catId => (
+      {categories.map(cat => (
         <button
-          key={catId}
-          onClick={() => { setShowShortsOnly(false); router.push(`/?tab=cat_${catId}`); }}
+          key={cat.id}
+          onClick={() => { setShowShortsOnly(false); router.push(`/?tab=cat_${cat.id}`); }}
           className={clsx(
             "px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors",
-            (activeTab === `cat_${catId}`) ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+            (activeTab === `cat_${cat.id}`) ? "bg-primary text-on-primary" : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
           )}
         >
-          #{catId}
+          {cat.name}
         </button>
       ))}
 

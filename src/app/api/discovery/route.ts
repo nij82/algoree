@@ -25,17 +25,34 @@ export async function GET(req: NextRequest) {
 
         // Dynamic categories extraction
         if (tab === "categories") {
+            const { YOUTUBE_CATEGORIES } = await import("@/lib/youtube");
+
             // Extract top 5 categories from history
             const catCount: Record<string, number> = {};
             history.forEach(v => {
                 if (v.categoryId) catCount[v.categoryId] = (catCount[v.categoryId] || 0) + 1;
             });
-            const topCategories = Object.entries(catCount)
+
+            // Sort by frequency
+            const sortedIds = Object.entries(catCount)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 5)
                 .map(entry => entry[0]);
 
-            return NextResponse.json({ categories: topCategories });
+            let topCategoryIds = sortedIds.slice(0, 5);
+
+            // Fallback Logic: If history is not enough (less than 2 categories)
+            if (topCategoryIds.length <= 1) {
+                // 기본값: 자기계발(교육), 과학/기술, 뉴스/경제
+                topCategoryIds = ["27", "28", "25"];
+            }
+
+            // Map IDs to Names
+            const categories = topCategoryIds.map(id => ({
+                id,
+                name: YOUTUBE_CATEGORIES[id] || `기타(${id})`
+            })).filter(cat => cat.name !== `기타(${cat.id})`); // 너무 마이너한 건 제외할 수 있음
+
+            return NextResponse.json({ categories });
         }
 
         // 3. Category Filter
